@@ -18,16 +18,17 @@
 ║  ALL ACTIVITIES ON THIS SYSTEM ARE LOGGED.  ║
 ╚═════════════════════════════════════════════╝
 
-System Date/Time..: Sunday,15 May 2022, 11:46:54 AM
-System Uptime.....: 2 days, 19 hours, 54 minutes
-System Hostname...: pi-10
-System Host IP....: 192.168.1.10
+System Date/Time..: Sunday, 15 May 2022, 06:21:02 PM
+System Uptime.....: 3 days, 2 hours, 28 minutes
+System Hostname...: pi-test
+SSH Host IP.......: 10.1.1.1
+SSH Client IP.....: 192.168.1.10
 System OS.........: Debian GNU/Linux 11 (bullseye)
 System Kernel.....: 5.15.32-v8+
 System Arch.......: aarch64
 System Proc.......: Raspberry Pi 4 Model B Rev 1.1
-Running Processes.: 219
-Memory Usage......: 39%
+Running Processes.: 220
+Memory Usage......: 36%
 Storage...........: sda1 Used: 12% Free: 221MB
 Storage...........: sda2 Used: 36% Free: 550.8GB
 External IP Info..: 12.34.56.78 host-78-56-34-12.com
