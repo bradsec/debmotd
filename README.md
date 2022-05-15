@@ -1,8 +1,8 @@
 ## Debian Ubuntu Raspberry Pi Linux Message of the Day (MOTD) banner with system information
 
 ### Tested with the following systems
-- Debian 11
-- Ubuntu 22.04 LTS
+* Debian 11
+* Ubuntu 22.04 LTS
 
 ### Sample output
 ```terminal
@@ -38,13 +38,14 @@ External IP Info..: 12.34.56.78 host-78-56-34-12.com
 
 ### Usage
 
-Download `motd.sh` as `00-motd` into `/etc/update-motd.d/` directory and set permissions.
+* Download `motd.sh` as `00-motd` into `/etc/update-motd.d/` directory and set permissions.
 ```sh
 sudo wget -O /etc/update-motd.d/00-motd https://raw.githubusercontent.com/bradsec/motd/main/motd.sh &&\
 sudo chmod 755 /etc/update-motd.d/00-motd
 ```
 
-Rename default motd located at /etc/motd
+* Rename default motd located at /etc/motd
+* *Applies to Debian and Raspberry Pi (not Ubuntu)* 
 ```sh
 sudo mv /etc/motd /etc/motd.original
 ```

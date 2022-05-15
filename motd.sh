@@ -156,8 +156,35 @@ function show_date() {
 
 
 function show_uptime() {
-    result=$(uptime -p | cut -c 4-)
-    output_result "${result}" "System Uptime"
+    # Ref uptime source: https://github.com/dylanaraps/neofetch
+    t=$(ps -o etime= -p 1)
+
+    [[ $t == *-*   ]] && { d=${t%%-*}; t=${t#*-}; }
+    [[ $t == *:*:* ]] && { h=${t%%:*}; t=${t#*:}; }
+
+    h=${h#0}
+    t=${t#0}
+
+    s=$((${d:-0}*86400 + ${h:-0}*3600 + ${t%%:*}*60 + ${t#*:}))
+    d="$((s / 60 / 60 / 24)) days"
+    h="$((s / 60 / 60 % 24)) hours"
+    m="$((s / 60 % 60)) minutes"
+
+    # Remove plural if < 2.
+    ((${d/ *} == 1)) && d=${d/s}
+    ((${h/ *} == 1)) && h=${h/s}
+    ((${m/ *} == 1)) && m=${m/s}
+
+    # Hide empty fields.
+    ((${d/ *} == 0)) && unset d
+    ((${h/ *} == 0)) && unset h
+    ((${m/ *} == 0)) && unset m
+
+    uptime=${d:+$d, }${h:+$h, }$m
+    uptime=${uptime%', '}
+    uptime=${uptime:-$s seconds}
+
+    output_result "${uptime}" "System Uptime"
 }
 
 
@@ -167,24 +194,28 @@ function show_hostname() {
 }
 
 
-function show_hostip() {
-    result=$(hostname --all-ip-addresses | awk '{print $1}')
-    output_result "${CYAN}${result}${RESET}" "System Host IP"
+function show_ssh_ip() {
+    result=$(echo $SSH_CONNECTION | awk '{print $3}')
+    output_result "${CYAN}${result}${RESET}" "SSH Host IP"
+    result=$(echo $SSH_CONNECTION | awk '{print $1}')
+    output_result "${YELLOW}${result}${RESET}" "SSH Client IP"
 }
 
 
 function show_os_info() {
     if [[ $(command -v lsb_release) ]] >/dev/null 2>&1; then
-        local codename=$(lsb_release -c --short)
-        local release=$(lsb_release -r --short)
         local dist=$(lsb_release -d --short)
-        local distid=$(lsb_release -i --short)
+        output_result "${dist}" "System OS"    
+    fi
+     if [[ $(command -v uname) ]] >/dev/null 2>&1; then
         local arch=$(uname -m)
         local kernel=$(uname -r)
-        local dpkg_arch=$(dpkg --print-architecture)
-        output_result "${dist}" "System OS"
+        local kname=$(uname -s)
+        if [[ -z ${dist} ]]; then
+            output_result "${kname}" "System OS"
+        fi
         output_result "${kernel}" "System Kernel"
-        output_result "${arch}" "System Arch"       
+        output_result "${arch}" "System Arch"
     fi
 }
 
@@ -217,7 +248,7 @@ function sys_info() {
     show_date
     show_uptime
     show_hostname
-    show_hostip
+    show_ssh_ip
     show_os_info
     show_cpu
     show_running
