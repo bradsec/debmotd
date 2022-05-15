@@ -1,4 +1,4 @@
-## Debian Ubuntu Linux Message of the Day (MOTD) banner with system information
+## Debian Ubuntu Raspberry Pi Linux Message of the Day (MOTD) banner with system information
 
 ### Tested with the following systems
 - Debian 11
@@ -60,6 +60,6 @@ sudo chmod +x /etc/update-motd.d/00-motd &&\
 sudo systemctl restart ssh
 ```
 - The ipinfo.io lookup delays the execution slightly.
-- Comment out the `show_ipinfo` in the `main()` function if you don't want external IP details or to speed up the script on login.  
+- Comment out the `show_ipinfo` in the `sys_info()` function if you don't want external IP details or to speed up the script on login.  
 
 
