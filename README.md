@@ -42,7 +42,7 @@ External IP Info..: 12.34.56.78 host-78-56-34-12.com
 * The following applies to Debian and Raspberry Pi
 * Download `motd.sh` as `00-motd` into `/etc/update-motd.d/` directory and set permissions.
 ```sh
-sudo wget -O /etc/update-motd.d/00-motd https://raw.githubusercontent.com/bradsec/motd/main/motd.sh &&\
+sudo wget -qO /etc/update-motd.d/00-motd https://raw.githubusercontent.com/bradsec/motd/main/motd.sh &&\
 sudo chmod 755 /etc/update-motd.d/00-motd
 ```
 
