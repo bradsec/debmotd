@@ -36,8 +36,9 @@ term_colors
 # No dots will be printed in Usage 2, can used for additional lines etc.
 output_result() {
     max_title_len=17
-    max_len="18"
-    result=${1}
+    max_dot_len="18"
+    max_result_len="60"
+    result=${1:0:${max_result_len}}
     title=${2:0:${max_title_len}}
     print_line(){
         if [[ -z ${1} ]]; then
@@ -45,7 +46,7 @@ output_result() {
         else
             char="${1}"
         fi
-	    for ((i=1; i<=${max_len}; i++)); do echo -ne "${char}"; done
+	    for ((i=1; i<=${max_dot_len}; i++)); do echo -ne "${char}"; done
         echo -n ": ${result}"
     }
     if [[ ! -z ${result} ]]; then
@@ -125,10 +126,10 @@ function show_storage() {
 }
 
 
-function show_running() {
+function show_processes() {
     if [[ $(ps ax | wc -l | tr -d " ") -gt "0" ]] >/dev/null 2>&1; then
         result=$(ps ax | wc -l | tr -d " ")
-        echo -e "Running Processes.: ${result}"
+        output_result "${result}" "Processes"
     fi    
 }
 
@@ -145,46 +146,54 @@ function show_cpu() {
         if ! [[ -z "${result}" ]]; then
             output_result "${result}" "System Proc"
         fi
+    elif [[ $(sysctl -a) ]] >/dev/null 2>&1; then
+            result=$(sysctl -a | egrep -i 'hw.model' | sed 's/[^ ]* //')
+            output_result "${result}" "System Proc"
     fi
 }
 
 
 function show_date() {
-    result=$(date +"%A, %e %B %Y, %r")
+    result=$(date +"%a, %e %B %Y, %r")
     output_result "${result}" "System Date/Time"
 }
 
 
 function show_uptime() {
-    # Ref uptime source: https://github.com/dylanaraps/neofetch
-    t=$(ps -o etime= -p 1)
+    if [[ $(uptime -p) ]] >/dev/null 2>&1; then
+        result=$(uptime -p | sed 's/[^ ]* //')
+        output_result "${result}" "System Uptime"
+    elif [[ $(ps -o etime= -p 1) ]] >/dev/null 2>&1; then
+        # Ref uptime source: https://github.com/dylanaraps/neofetch
+        t=$(ps -o etime= -p 1)
 
-    [[ $t == *-*   ]] && { d=${t%%-*}; t=${t#*-}; }
-    [[ $t == *:*:* ]] && { h=${t%%:*}; t=${t#*:}; }
+        [[ $t == *-*   ]] && { d=${t%%-*}; t=${t#*-}; }
+        [[ $t == *:*:* ]] && { h=${t%%:*}; t=${t#*:}; }
 
-    h=${h#0}
-    t=${t#0}
+        h=${h#0}
+        t=${t#0}
 
-    s=$((${d:-0}*86400 + ${h:-0}*3600 + ${t%%:*}*60 + ${t#*:}))
-    d="$((s / 60 / 60 / 24)) days"
-    h="$((s / 60 / 60 % 24)) hours"
-    m="$((s / 60 % 60)) minutes"
+        s=$((${d:-0}*86400 + ${h:-0}*3600 + ${t%%:*}*60 + ${t#*:}))
+        d="$((s / 60 / 60 / 24)) days"
+        h="$((s / 60 / 60 % 24)) hours"
+        m="$((s / 60 % 60)) minutes"
 
-    # Remove plural if < 2.
-    ((${d/ *} == 1)) && d=${d/s}
-    ((${h/ *} == 1)) && h=${h/s}
-    ((${m/ *} == 1)) && m=${m/s}
+        # Remove plural if < 2.
+        ((${d/ *} == 1)) && d=${d/s}
+        ((${h/ *} == 1)) && h=${h/s}
+        ((${m/ *} == 1)) && m=${m/s}
 
-    # Hide empty fields.
-    ((${d/ *} == 0)) && unset d
-    ((${h/ *} == 0)) && unset h
-    ((${m/ *} == 0)) && unset m
+        # Hide empty fields.
+        ((${d/ *} == 0)) && unset d
+        ((${h/ *} == 0)) && unset h
+        ((${m/ *} == 0)) && unset m
 
-    uptime=${d:+$d, }${h:+$h, }$m
-    uptime=${uptime%', '}
-    uptime=${uptime:-$s seconds}
+        uptime=${d:+$d, }${h:+$h, }$m
+        uptime=${uptime%', '}
+        uptime=${uptime:-$s seconds}
 
-    output_result "${uptime}" "System Uptime"
+        output_result "${uptime}" "System Uptime"
+    fi
 }
 
 
@@ -220,14 +229,13 @@ function show_os_info() {
 }
 
 
-function show_ipinfo() {
+function show_ext_ip() {
     get_ip_info || \
     output_result "${RED}Offline - Unable to get IP information. ${RESET}" "External IP Info"
 }
 
 
 function sys_warning() {
-    clear
     echo -ne "${RED}
 ╔═════════════════════════════════════════════╗
 ║     YOU HAVE ACCESSED A PRIVATE SYSTEM      ║
@@ -248,19 +256,20 @@ function sys_info() {
     show_date
     show_uptime
     show_hostname
-    show_ssh_ip
     show_os_info
     show_cpu
-    show_running
+    show_processes
     show_mem
     show_storage
-    # Comment out show_ipinfo to speed up script if IP info not required
-    show_ipinfo
+    show_ssh_ip
+    # Uncomment show_ext_ip line below if external IP info required
+    #show_ext_ip
     echo -e "\n"
 }
 
 
 function main() {
+    clear
     sys_warning
     sys_info
 }
