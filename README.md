@@ -31,7 +31,7 @@ Memory Usage......: 36%
 Storage sda1......: sda1 Used: 12% Free: 221MB
 Storage sda2......: sda2 Used: 36% Free: 550.8GB
 Network eth0......: 192.168.1.10
-Ext. IP Address...: 12.34.56.78 host-78-56-34-12.com
+Ext. IP Address...: 12.34.56.78
 Ext. IP Location..: City Region CountryCode
 Ext. IP ORG/ISP...: Provide / ISP Information
 
