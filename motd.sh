@@ -79,7 +79,7 @@ function get_ip_info(){
 
         # Display variables use xargs to strip variable whitespace
         if [[ ! -z "${ip}" ]]; then
-            output_result "${YELLOW}${ip}${RESET} ${hostname}" "Ext. IP Address"
+            output_result "${GREEN}${ip}${RESET}" "Ext. IP Address"
         fi
         if [[ ! -z "${city}" ]]; then
             output_result "${city} ${region} ${country}" "Ext. IP Location"
