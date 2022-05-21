@@ -28,9 +28,9 @@ System Arch.......: aarch64
 System Proc.......: Raspberry Pi 4 Model B Rev 1.1
 Running Processes.: 220
 Memory Usage......: 36%
-Storage...........: sda1 Used: 12% Free: 221MB
-Storage...........: sda2 Used: 36% Free: 550.8GB
-Interface eth0....: 192.168.1.10
+Storage sda1......: sda1 Used: 12% Free: 221MB
+Storage sda2......: sda2 Used: 36% Free: 550.8GB
+Network eth0......: 192.168.1.10
 Ext. IP Address...: 12.34.56.78 host-78-56-34-12.com
 Ext. IP Location..: City Region CountryCode
 Ext. IP ORG/ISP...: Provide / ISP Information

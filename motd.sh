@@ -124,7 +124,8 @@ function show_storage() {
         echo "${raw_storage}" | while read -r line; 
             do 
                 if [[ ! -z "${line}" ]]; then
-                    output_result "${line}" "Storage"
+                    dev_name=$(printf ${line} | awk '{print $1}')
+                    output_result "$(echo ${line} | awk '{ print $2" "$3" "$4" "$5 }')" "Storage ${dev_name}"
                 fi
             done
     fi
@@ -147,7 +148,7 @@ function show_interfaces() {
             done
         for i in "${iface_active[@]}"; 
             do 
-                output_result "$(echo -e ${i} | awk '{print $2}')" "Interface $(echo -e ${i} | awk '{print $1}')"
+                output_result "$(echo ${i} | awk '{print $2}')" "Network $(echo ${i} | awk '{print $1}')"
             done
     fi
 }
