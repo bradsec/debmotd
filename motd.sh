@@ -50,36 +50,38 @@ function output_result() {
 
 
 function get_ip_info(){
-    json_data=$(timeout 3s wget -qO- ipinfo.io)
+    if [[ $(command -v wget) ]] >/dev/null 2>&1; then
+        json_data=$(timeout 3s wget -qO- ipinfo.io)
 
-    # Sub-function to get JSON value
-    function get_json_value() {
-        json_key=${1}
-        result=$(echo "${json_data}" \
-                | awk -F=":" -v RS="," '$1~/"'${json_key}'"/ {print}' \
-                | sed 's/\"//g; s/'${json_key}'://; s/[\{\}]//' \
-                | awk '{$1=$1};1' \
-                | awk NF)
+        # Sub-function to get JSON value
+        function get_json_value() {
+            json_key=${1}
+            result=$(echo "${json_data}" \
+                    | awk -F=":" -v RS="," '$1~/"'${json_key}'"/ {print}' \
+                    | sed 's/\"//g; s/'${json_key}'://; s/[\{\}]//' \
+                    | awk '{$1=$1};1' \
+                    | awk NF)
 
-        if [ "${result}" = "" ]; then
-            echo ""
-        else
-            echo "${result}"
-        fi
-    }
+            if [ "${result}" = "" ]; then
+                echo ""
+            else
+                echo "${result}"
+            fi
+        }
 
-    # Assign variables based on JSON value returned.
-    ip=$(get_json_value ip)
-    hostname=$(get_json_value hostname)
-    city=$(get_json_value city)
-    region=$(get_json_value region)
-    country=$(get_json_value country)
-    org=$(get_json_value org)
+        # Assign variables based on JSON value returned.
+        ip=$(get_json_value ip)
+        hostname=$(get_json_value hostname)
+        city=$(get_json_value city)
+        region=$(get_json_value region)
+        country=$(get_json_value country)
+        org=$(get_json_value org)
 
-    # Display variables use xargs to strip variable whitespace
-    output_result "${YELLOW}${ip}${RESET} ${hostname}" "Ext. IP Address"
-    output_result "${city} ${region} ${country}" "Ext. IP Location"
-    output_result "${org}" "Ext. IP ORG/ISP"
+        # Display variables use xargs to strip variable whitespace
+        output_result "${YELLOW}${ip}${RESET} ${hostname}" "Ext. IP Address"
+        output_result "${city} ${region} ${country}" "Ext. IP Location"
+        output_result "${org}" "Ext. IP ORG/ISP"
+    fi
 }
 
 
@@ -157,12 +159,14 @@ function show_cpu() {
         else
             result="${check_cpu}"
         fi
-        if ! [[ -z "${result}" ]]; then
+        if [[ ! -z "${result}" ]]; then
             output_result "${result}" "System Proc"
         fi
     elif [[ $(sysctl -a) ]] >/dev/null 2>&1; then
-            result=$(sysctl -a | egrep -i 'hw.model' | sed 's/[^ ]* //')
+        result=$(sysctl -a | egrep -i 'hw.model' | sed 's/[^ ]* //')
+        if [[ ! -z "${result}" ]]; then
             output_result "${result}" "System Proc"
+        fi
     fi
 }
 
@@ -280,4 +284,4 @@ function main() {
     sys_info
 }
 
-main "${@}"
+main
