@@ -78,9 +78,15 @@ function get_ip_info(){
         org=$(get_json_value org)
 
         # Display variables use xargs to strip variable whitespace
-        output_result "${YELLOW}${ip}${RESET} ${hostname}" "Ext. IP Address"
-        output_result "${city} ${region} ${country}" "Ext. IP Location"
-        output_result "${org}" "Ext. IP ORG/ISP"
+        if [[ ! -z "${ip}" ]]; then
+            output_result "${YELLOW}${ip}${RESET} ${hostname}" "Ext. IP Address"
+        fi
+        if [[ ! -z "${city}" ]]; then
+            output_result "${city} ${region} ${country}" "Ext. IP Location"
+        fi
+        if [[ ! -z "${org}" ]]; then
+            output_result "${org}" "Ext. IP ORG/ISP"
+        fi
     fi
 }
 
@@ -115,7 +121,12 @@ function show_storage() {
                 colored_val=$(percentage_color ${element})
                 raw_storage=${raw_storage/${element}/$colored_val}
             done
-        echo "${raw_storage}" | while read -r line; do output_result "${line}" "Storage"; done
+        echo "${raw_storage}" | while read -r line; 
+            do 
+                if [[ ! -z "${line}" ]]; then
+                    output_result "${line}" "Storage"
+                fi
+            done
     fi
 }
 

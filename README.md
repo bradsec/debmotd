@@ -66,3 +66,7 @@ sudo systemctl restart ssh
 * Comment out in the `sys_info()` function to disable this function.
 
 
+#### Troubleshooting
+* Ubuntu by default may be missing `ifconfig` and no display network interface IP information.
+* Simply install net-tools using `sudo apt install net-tools`  
+
