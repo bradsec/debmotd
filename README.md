@@ -30,10 +30,14 @@ Running Processes.: 220
 Memory Usage......: 36%
 Storage...........: sda1 Used: 12% Free: 221MB
 Storage...........: sda2 Used: 36% Free: 550.8GB
-SSH Host IP.......: 10.1.1.1
-SSH Client IP.....: 192.168.1.10
-External IP Info..: 12.34.56.78 host-78-56-34-12.com
-                  : City Region CountryCode
+
+-- Network Details --
+Interface eth0....: 192.168.1.10
+
+-- External IP Information --
+IP Address........: 12.34.56.78 host-78-56-34-12.com
+IP Location.......: City Region CountryCode
+IP ORG/ISP........: Provide / ISP Information
 
 ```
 
@@ -63,6 +67,6 @@ sudo chmod +x /etc/update-motd.d/00-motd &&\
 sudo systemctl restart ssh
 ```
 * The ipinfo.io lookup delays the execution and login slightly.
-* Commented out by default in the `sys_info()` function. Uncomment if you want external IP information.  
+* Comment out in the `sys_info()` function to disable this function.
 
 

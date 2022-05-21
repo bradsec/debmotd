@@ -66,10 +66,12 @@ function get_ip_info(){
     city=$(get_json_value city)
     region=$(get_json_value region)
     country=$(get_json_value country)
+    org=$(get_json_value org)
 
     # Display variables use xargs to strip variable whitespace
-    output_result "${CYAN}${ip}${RESET} ${hostname}" "External IP Info"
-    output_result "${city} ${region} ${country}" 
+    output_result "${YELLOW}${ip}${RESET} ${hostname}" "IP Address"
+    output_result "${city} ${region} ${country}" "IP Location"
+    output_result "${org}" "IP ORG/ISP"
 }
 
 
@@ -104,6 +106,29 @@ function show_storage() {
                 raw_storage=${raw_storage/${element}/$colored_val}
             done
         echo "${raw_storage}" | while read -r line; do output_result "${line}" "Storage"; done
+    fi
+}
+
+
+function show_interfaces() {
+    if [[ $(command -v /sbin/ifconfig) ]] >/dev/null 2>&1; then
+        echo -e "\n-- Network Details --"
+        local iface_active=()
+        for iface in $(/sbin/ifconfig | expand | cut -c1-8 | sort | uniq -u | awk -F: '{print $1}')
+            do
+                iface_v4=""
+                if [[ $(/sbin/ifconfig $iface | grep "status: active") ]] || \
+                    [[ $(/sbin/ifconfig $iface | grep "inet.*broadcast") ]] >/dev/null 2>&1; then
+                    iface_v4=$(/sbin/ifconfig $iface | grep -w inet | awk '{print $2}' | awk 'NR==1')
+                    if [[ ! -z ${iface_v4} ]]; then
+                        iface_active+=("$(printf "${iface} ${CYAN}${iface_v4}${RESET}")")
+                    fi
+                fi
+            done
+        for i in "${iface_active[@]}"; 
+            do 
+                output_result "$(echo -e ${i} | awk '{print $2}')" "Interface $(echo -e ${i} | awk '{print $1}')"
+            done
     fi
 }
 
@@ -181,7 +206,7 @@ function show_uptime() {
 
 function show_hostname() {
     result=$(hostname)
-    output_result "${CYAN}${result}${RESET}" "System Hostname"
+    output_result "${GREEN}${result}${RESET}" "System Hostname"
 }
 
 
@@ -204,6 +229,7 @@ function show_os_info() {
 
 
 function show_ext_ip() {
+    echo -e "\n-- External IP Information --"
     get_ip_info || \
     output_result "${RED}Offline - Unable to get IP information. ${RESET}" "External IP Info"
 }
@@ -235,8 +261,9 @@ function sys_info() {
     show_processes
     show_mem
     show_storage
-    #show_ext_ip
-    echo -e "\n"
+    show_interfaces
+    show_ext_ip
+    echo
 }
 
 
