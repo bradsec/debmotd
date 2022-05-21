@@ -1,40 +1,21 @@
 #!/usr/bin/env bash
 
-###########################################################################################
-# Name:             motd                                                                  #                                 
-# Description:      Custom motd login banner for Debian systems                           #
-# Requirements:     wget and timeout command. Generally installed or in coreutils.        #
-###########################################################################################
-
-set -o errexit
-set -o pipefail
-
 # Set colors for use in task terminal output functions
 term_colors() {
-    if [[ -t 1 ]]; then
-        RED=$(printf '\033[31m')
-        GREEN=$(printf '\033[32m')
-        CYAN=$(printf '\033[36m')
-        YELLOW=$(printf '\033[33m')
-        BOLD=$(printf '\033[1m')
-        RESET=$(printf '\033[0m')
-    else
-        RED=""
-        GREEN=""
-        CYAN=""
-        YELLOW=""
-        BOLD=""
-        RESET=""
-    fi
+    RED=$(printf '\033[31m')
+    GREEN=$(printf '\033[32m')
+    CYAN=$(printf '\033[36m')
+    YELLOW=$(printf '\033[33m')
+    BOLD=$(printf '\033[1m')
+    RESET=$(printf '\033[0m')
 }
-# Init terminal colours
-term_colors
+
 
 # output_result function
 # Usage 1: output_result "result text" "result title"
 # Usage 2: output_result "result text"
 # No dots will be printed in Usage 2, can used for additional lines etc.
-output_result() {
+function output_result() {
     max_title_len=17
     max_dot_len="18"
     max_result_len="60"
@@ -58,6 +39,7 @@ output_result() {
         fi
     fi
 }
+
 
 function get_ip_info(){
     json_data=$(timeout 3s wget -qO- ipinfo.io)
@@ -203,14 +185,6 @@ function show_hostname() {
 }
 
 
-function show_ssh_ip() {
-    result=$(echo $SSH_CONNECTION | awk '{print $3}')
-    output_result "${CYAN}${result}${RESET}" "SSH Host IP"
-    result=$(echo $SSH_CONNECTION | awk '{print $1}')
-    output_result "${YELLOW}${result}${RESET}" "SSH Client IP"
-}
-
-
 function show_os_info() {
     if [[ $(command -v lsb_release) ]] >/dev/null 2>&1; then
         local dist=$(lsb_release -d --short)
@@ -261,8 +235,6 @@ function sys_info() {
     show_processes
     show_mem
     show_storage
-    show_ssh_ip
-    # Uncomment show_ext_ip line below if external IP info required
     #show_ext_ip
     echo -e "\n"
 }
@@ -270,8 +242,9 @@ function sys_info() {
 
 function main() {
     clear
+    term_colors
     sys_warning
     sys_info
 }
 
-main
+main "${@}"
