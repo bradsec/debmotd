@@ -1,13 +1,67 @@
 #!/usr/bin/env bash
 
-# Set colors for use in task terminal output functions
+# Setup terminal colors and functions
 term_colors() {
+    # Styles
+    RESET=$(printf '\033[0m')
+    BOLD=$(printf '\033[1m')
+    ULINE=$(printf '\033[4m')
+    BLINK=$(printf '\033[5m')
+    REVERSE=$(printf '\033[7m')
+    TRIM=$(printf '\33[K')
+    # Symbols
+    TICK=$(printf '\xe2\x9c\x94')
+    CROSS=$(printf '\xe2\x9c\x98')
+    # Foreground Colors
+    BLACK=$(printf '\033[30m')
     RED=$(printf '\033[31m')
     GREEN=$(printf '\033[32m')
-    CYAN=$(printf '\033[36m')
     YELLOW=$(printf '\033[33m')
-    BOLD=$(printf '\033[1m')
-    RESET=$(printf '\033[0m')
+    BLUE=$(printf '\033[34m')
+    MAGENTA=$(printf '\033[35m')
+    CYAN=$(printf '\033[36m')
+    WHITE=$(printf '\033[37m')
+    # Background Colors
+    BG_BLACK=$(printf '\033[40m')
+    BG_RED=$(printf '\033[41m')
+    BG_GREEN=$(printf '\033[42m')
+    BG_YELLOW=$(printf '\033[43m')
+    BG_BLUE=$(printf '\033[44m')
+    BG_MAGENTA=$(printf '\033[45m')
+    BG_CYAN=$(printf '\033[46m')   
+    BG_WHITE=$(printf '\033[47m')
+    clear_screen() {
+        printf '\33[2J'
+        printf '\033c'
+    }
+    show_cursor() {
+        printf '\33[?25h'
+    }
+    hide_cursor() {
+        printf '\33[?25l'
+    }
+    trap show_cursor EXIT
+    move_cursor() {
+        local direction=${1}
+        local amount=${2}
+        case "${direction}" in
+            up) printf "\033[${amount}A"
+            ;;
+            down) printf "\033[${amount}B"
+            ;;
+            forward) printf "\033[${amount}C"
+            ;;
+            back) printf "\033[${amount}D"
+            ;;
+        esac
+    }
+    next_line() {
+        move_cursor down 1
+    }
+    prev_line() {
+        move_cursor up 1
+    }
+    TAB=$(move_cursor forward 4)
 }
 
 
@@ -258,18 +312,20 @@ function show_ext_ip() {
 
 
 function sys_warning() {
-    echo -ne "${RED}
-╔═════════════════════════════════════════════╗
-║     YOU HAVE ACCESSED A PRIVATE SYSTEM      ║
-║         AUTHORISED USER ACCESS ONLY         ║
-║                                             ║
-║ Unauthorised use of this system is strictly ║
-║ prohibited and may be subject to criminal   ║
-║ prosecution.                                ║
-║                                             ║
-║  ALL ACTIVITIES ON THIS SYSTEM ARE LOGGED.  ║
-╚═════════════════════════════════════════════╝
-${RESET}"
+    echo -ne "
+
+${BG_RED}${WHITE}╔═════════════════════════════════════════════╗${RESET}
+${BG_RED}${WHITE}║     YOU HAVE ACCESSED A PRIVATE SYSTEM      ║${RESET}
+${BG_RED}${WHITE}║         AUTHORISED USER ACCESS ONLY         ║${RESET}
+${BG_RED}${WHITE}║                                             ║${RESET}
+${BG_RED}${WHITE}║ Unauthorised use of this system is strictly ║${RESET}
+${BG_RED}${WHITE}║ prohibited and may be subject to criminal   ║${RESET}
+${BG_RED}${WHITE}║ prosecution.                                ║${RESET}
+${BG_RED}${WHITE}║                                             ║${RESET}
+${BG_RED}${WHITE}║  ALL ACTIVITIES ON THIS SYSTEM ARE LOGGED.  ║${RESET}
+${BG_RED}${WHITE}╚═════════════════════════════════════════════╝${RESET}
+
+"
 }
 
 
