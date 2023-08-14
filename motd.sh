@@ -81,7 +81,7 @@ function output_result() {
         else
             char="${1}"
         fi
-	    for ((i=1; i<=${max_dot_len}; i++)); do echo -ne "${char}"; done
+	    for ((i=1; i<=${max_dot_len}; i++)); do echo -ne "${RESET}${char}"; done
         echo -n ": ${result}"
     }
     if [[ ! -z ${result} ]]; then
@@ -158,63 +158,110 @@ function percentage_color() {
 
 
 function show_mem() {
-    if [[ $(command -v free -t) ]] >/dev/null 2>&1; then
-        mem_perc=$(free -t | awk 'FNR == 2 { printf "%d", $3/$2*100 }')
-        result=$(percentage_color ${mem_perc})
-        output_result "${result}" "Memory Usage"
+    # Check for the OS type
+    if [[ "$(uname)" == "FreeBSD" ]]; then
+        # FreeBSD memory statistics
+        total_mem=$(sysctl hw.realmem | awk '{print $2/1024/1024}')  # Convert bytes to MB
+        free_mem=$(sysctl vm.stats.vm.v_free_count | awk '{print $2 * 4 / 1024}')  # Convert pages to MB
+        used_mem=$(echo "${total_mem} - ${free_mem}" | bc)
+        mem_perc=$((used_mem * 100 / total_mem))
+    else
+        # Debian-based (and other Linux) memory statistics
+        total_mem=$(free -m | awk 'FNR == 2 {print $2}')
+        used_mem=$(free -m | awk 'FNR == 2 {print $3}')
+        mem_perc=$((used_mem * 100 / total_mem))
     fi
+
+    result=$(percentage_color ${mem_perc})
+    output_result "${used_mem}MB/${total_mem}MB (${result})" "Memory Usage"
 }
 
 
-function show_storage() {
-    if [[ $(command -v lsblk) ]] >/dev/null 2>&1; then
-        raw_storage="$(lsblk -f -r -n | grep % | grep -v "loop" | sort | awk 'FNR { printf "%s Used: %s Free: %sB\n\t\t    ", $1,$(NF-1),$(NF-2); }')"
-        IFS=', ' read -r -a array <<< $(lsblk -f -r -n | tr ' ' '\n' | grep '%$' | xargs)
-        for element in "${array[@]}"
-            do
-                colored_val=$(percentage_color ${element})
-                raw_storage=${raw_storage/${element}/$colored_val}
-            done
-        echo "${raw_storage}" | while read -r line; 
-            do 
-                if [[ ! -z "${line}" ]]; then
-                    dev_name=$(printf ${line} | awk '{print $1}')
-                    output_result "$(echo ${line} | awk '{ print $2" "$3" "$4" "$5 }')" "Storage ${dev_name}"
-                fi
-            done
+get_unit() {
+    local size=$1
+    local unit=${size: -1}  # Get the last character (unit)
+    local value=${size:0:${#size}-1}  # Get the value without the unit
+    case $unit in
+        G)
+            echo $((value * 1024 * 1024 * 1024))
+            ;;
+        M)
+            echo $((value * 1024 * 1024))
+            ;;
+        *)
+            echo $value
+            ;;
+    esac
+}
+
+convert_bytes() {
+    local bytes=$1
+    if (( bytes >= 1024*1024*1024 )); then
+        echo "$((bytes / 1024 / 1024 / 1024))GB"
+    elif (( bytes >= 1024*1024 )); then
+        echo "$((bytes / 1024 / 1024))MB"
+    else
+        echo "$((bytes / 1024))KB"
+    fi
+}
+
+show_storage() {
+    if [[ $(command -v df) ]] >/dev/null 2>&1; then
+        # Run the df command, filter for /dev filesystem, and store the output
+        disk_info=$(df -H | grep "^/dev/")
+
+        # Loop through each line of the output and process the information
+        while IFS= read -r line; do
+            total_size=$(echo "$line" | awk '{print $2}')
+            total_size_bytes=$(get_unit "$total_size")
+            total_space=$(convert_bytes $total_size_bytes)
+            available_space=$(echo "$line" | awk '{print $4}')
+            available_space_bytes=$(get_unit "$available_space")
+            use_percentage=$(echo "$line" | awk '{print $5}')
+            use_space_bytes=$((total_size_bytes - available_space_bytes))
+            use_space=$(convert_bytes $use_space_bytes)
+            mount_point=$(echo "$line" | awk '{print $6}')
+            use_percentage_color=$(percentage_color ${use_percentage})  # Assuming this function is defined
+
+            output_string="$use_space/$total_space ($use_percentage_color)"
+            output_result "$output_string" "Storage $mount_point"
+        done <<< "$disk_info"
     fi
 }
 
 
 function show_interfaces() {
-    if [[ $(command -v /sbin/ifconfig) ]] >/dev/null 2>&1; then
+    if [[ $(command -v ifconfig) ]] >/dev/null 2>&1; then
         local iface_active=()
-        for iface in $(/sbin/ifconfig | expand | cut -c1-8 | sort | uniq -u | awk -F: '{print $1}')
-            do
-                iface_v4=""
-                if [[ $(/sbin/ifconfig $iface | grep "status: active") ]] || \
-                    [[ $(/sbin/ifconfig $iface | grep "inet.*broadcast") ]] >/dev/null 2>&1; then
-                    iface_v4=$(/sbin/ifconfig $iface | grep -w inet | awk '{print $2}' | awk 'NR==1')
-                    if [[ ! -z ${iface_v4} ]]; then
-                        iface_active+=("$(printf "${iface} ${CYAN}${iface_v4}${RESET}")")
-                    fi
-                fi
-            done
-        for i in "${iface_active[@]}"; 
-            do 
-                output_result "$(echo ${i} | awk '{print $2}')" "Network $(echo ${i} | awk '{print $1}')"
-            done
+
+        # Check OS type and get list of interface names accordingly
+        if [[ "$(uname)" == "FreeBSD" ]]; then
+            iface_list=$(ifconfig -l)
+        else
+            iface_list=$(ifconfig | grep -o '^[a-z0-9]*' | tr '\n' ' ')
+        fi
+
+        for iface in $iface_list; do
+            iface_status=$(ifconfig $iface | grep "status:" | awk '{print $2}')
+            iface_v4=$(ifconfig $iface | grep "inet " | awk '{print $2}')
+
+            if [[ -n "$iface_status" && "$iface_status" != "active" ]]; then
+                continue
+            fi
+
+            if [[ -n "$iface_v4" ]]; then
+                iface_active+=("$(printf "${iface} ${CYAN}${iface_v4}${RESET}")")
+            else
+                iface_active+=("$(printf "${iface} Unconfigured")")
+            fi
+        done
+
+        # Print active interfaces
+        for i in "${iface_active[@]}"; do
+            output_result "$(echo ${i} | awk '{print $2}')" "Network $(echo ${i} | awk '{print $1}')"
+        done
     fi
 }
-
-
-function show_processes() {
-    if [[ $(ps ax | wc -l | tr -d " ") -gt "0" ]] >/dev/null 2>&1; then
-        result=$(ps ax | wc -l | tr -d " ")
-        output_result "${result}" "Processes"
-    fi    
-}
-
 
 function show_cpu() {
     if [[ $(cat /proc/cpuinfo) ]] >/dev/null 2>&1; then
@@ -235,7 +282,6 @@ function show_cpu() {
         fi
     fi
 }
-
 
 function show_date() {
     result=$(date +"%a, %e %B %Y, %r")
@@ -311,32 +357,13 @@ function show_ext_ip() {
 }
 
 
-function sys_warning() {
-    echo -ne "
-
-${BG_RED}${WHITE}╔═════════════════════════════════════════════╗${RESET}
-${BG_RED}${WHITE}║     YOU HAVE ACCESSED A PRIVATE SYSTEM      ║${RESET}
-${BG_RED}${WHITE}║         AUTHORISED USER ACCESS ONLY         ║${RESET}
-${BG_RED}${WHITE}║                                             ║${RESET}
-${BG_RED}${WHITE}║ Unauthorised use of this system is strictly ║${RESET}
-${BG_RED}${WHITE}║ prohibited and may be subject to criminal   ║${RESET}
-${BG_RED}${WHITE}║ prosecution.                                ║${RESET}
-${BG_RED}${WHITE}║                                             ║${RESET}
-${BG_RED}${WHITE}║  ALL ACTIVITIES ON THIS SYSTEM ARE LOGGED.  ║${RESET}
-${BG_RED}${WHITE}╚═════════════════════════════════════════════╝${RESET}
-
-"
-}
-
-
 function sys_info() {
     echo
+    show_hostname
     show_date
     show_uptime
-    show_hostname
     show_os_info
     show_cpu
-    show_processes
     show_mem
     show_storage
     show_interfaces
@@ -344,11 +371,24 @@ function sys_info() {
     echo
 }
 
+function sys_banner() {
+    echo -e "
+${RED}╔═════════════════════════════════════════════╗${RESET}
+${RED}║     YOU HAVE ACCESSED A PRIVATE SYSTEM      ║${RESET}
+${RED}║         AUTHORISED USER ACCESS ONLY         ║${RESET}
+${RED}║                                             ║${RESET}
+${RED}║ Unauthorised use of this system is strictly ║${RESET}
+${RED}║ prohibited and may be subject to criminal   ║${RESET}
+${RED}║ prosecution.                                ║${RESET}
+${RED}║                                             ║${RESET}
+${RED}║  ALL ACTIVITIES ON THIS SYSTEM ARE LOGGED.  ║${RESET}
+${RED}╚═════════════════════════════════════════════╝${RESET}"
+}
 
 function main() {
     clear
     term_colors
-    sys_warning
+    sys_banner
     sys_info
 }
 
