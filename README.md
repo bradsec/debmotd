@@ -46,7 +46,7 @@ System Proc.......: Raspberry Pi 4 Model B Rev 1.1
 The following applies to Debian and Raspberry Pi
 ```terminal
 # Download `motd.sh` as `00-motd` into `/etc/update-motd.d/` directory and set permissions.
-sudo wget -qO /etc/update-motd.d/00-motd https://raw.githubusercontent.com/bradsec/motd/main/motd.sh &&\
+sudo wget -qO /etc/update-motd.d/00-motd https://raw.githubusercontent.com/bradsec/debmotd/main/motd.sh &&\
 sudo chmod 755 /etc/update-motd.d/00-motd
 
 # Rename default motd (applies to Debian and Raspberry Pi not Ubuntu) 
